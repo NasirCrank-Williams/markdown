@@ -1,0 +1,126 @@
+﻿@page "/"
+@inject HttpClient Http
+@using markdown.Shared.Handlers;
+@using markdown.Shared.Models.Dto;
+@using Markdig;
+
+<style>
+	.markdown {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+	.left-box, .right-box {
+		height: 2.6rem;
+		background-color: rgb(245, 245, 245);
+		display: grid;
+		align-content: center;
+		padding-left: 1rem;
+	}
+	.left-box-title, .right-box-title {
+		font-weight: 500;
+		color: #7C8187;
+	}
+	.edit-form {
+		margin: 0.5rem 1rem 0.5rem 1rem;
+		border: none;
+	}
+	.input-text-area {
+		width: 100%;
+		min-height: 62rem; 
+		font-size: 0.88rem;
+		font-family: "Roboto Mono";
+		border: none;
+	}
+	.preview-text {
+		margin: 0.5rem 1rem 0.5rem 1rem;
+	}
+	.right-text-field {
+		font-family: "Roboto Slab";
+		border-left: 0.06rem solid #E4E4E4;
+	}
+	.right-text-field h1 {
+		font-weight: 700;
+	}
+	.right-text-field h2 {
+		font-weight: 300;
+	}
+	.right-text-field h6 {
+			color:#E46643;
+	}
+	.right-text-field p, ol, ul {
+		font-weight: 400;
+		font-size: 0.88rem;
+		line-height: 1.5rem;
+		color: #7C8187;
+	}
+	.right-text-field blockquote {
+		color: #35393F;
+		background-color: #F5F5F5;
+		border-radius: 0.25rem;
+		width: 100%;
+		box-sizing: border-box;
+		margin-left: 0;
+		display: grid;
+		align-content: center;
+		border-left: solid #E46643 0.25rem;
+	}
+	.right-text-field pre {
+		background-color: #F5F5F5;
+		padding: 1.4rem;
+	}
+	.right-text-field code {
+		color: #35393F;
+	}
+	.right-text-field blockquote p {
+		font-weight: 700;
+		font-size: 0.88rem;
+		line-height: 1.5rem;
+		padding-left: 1.5rem;
+	}
+</style>
+
+<PageTitle>Home</PageTitle>
+<div class="markdown">
+	<div class="left-text-field">
+		<div class="left-box">
+			<h4 class="left-box-title">MARKDOWN</h4>
+		</div>
+		<EditForm Model="@markdownDto" class="edit-form">
+			<div class="markdown-text">
+				<InputTextArea 
+					id="MarkdownText" 
+					class="input-text-area" 
+					@bind-Value=@markdownText
+					@oninput="OnInputChange"/>
+			</div>
+		</EditForm>
+	</div>
+	<div class="right-text-field">
+		<div class="right-box">
+			<h4 class="right-box-title">PREVIEW</h4>
+		</div>
+		<div class="preview-text">@((MarkupString)previewText)</div>
+	</div>
+
+</div>
+
+@code {
+	private string markdownText { get; set; } = string.Empty;
+
+	private string previewText { get; set; } = string.Empty;
+
+	private CreateMarkdownDto markdownDto = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		FileHandler? fileText = await Http.GetFromJsonAsync<FileHandler>("api/FileController/GetText?fileName=ExampleMarkdown.txt");
+		markdownText = fileText == null ? markdownText : fileText.FileText;
+		previewText = Markdig.Markdown.ToHtml(markdownText);
+	}
+
+	protected void OnInputChange(ChangeEventArgs args)
+	{
+		previewText = Markdig.Markdown.ToHtml(args.Value!.ToString()!);
+	}
+
+}
